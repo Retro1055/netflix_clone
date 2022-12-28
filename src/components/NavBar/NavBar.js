@@ -29,6 +29,7 @@ function NavBar() {
           const sessionId = await createSessionId();
           const { data: userData } = await moviesApi.get(`/account?session_id=${sessionId}`);
           dispatch(setUser(userData));
+          window.location.href = '/';
         }
       }
     };
