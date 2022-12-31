@@ -3,7 +3,6 @@ import { TextField, InputAdornment } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { searchMovie } from '../../Features/currentGenreOrCategory';
-
 import useStyles from './styles';
 
 function Search() {
