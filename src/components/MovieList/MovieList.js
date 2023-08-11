@@ -1,19 +1,19 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import { Movie } from '..';
 
 import useStyles from './styles';
+import { Movie } from '../index';
 
-function MovieList({ movies,noOfMovies }) {
+function MovieList({ movies, numberOfMovies, excludeFirst }) {
   const classes = useStyles();
+  const startFrom = excludeFirst ? 1 : 0;
+
   return (
-    <div>
-      <Grid container className={classes.moviesContainer}>
-        {movies.results.slice(0,noOfMovies).map((movie, i) => (
-          <Movie key={i} movie={movie} i={i} />
-        ))}
-      </Grid>
-    </div>
+    <Grid container className={classes.moviesContainer}>
+      {movies.results.slice(startFrom, numberOfMovies).map((movie, i) => (
+        <Movie key={i} movie={movie} i={i} />
+      ))}
+    </Grid>
   );
 }
 

@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Typography, Button, ButtonGroup, Grid, Box, CircularProgress, Rating } from '@mui/material';
 import { Movie as MovieIcon, Theaters, Language, PlusOne, Favorite, FavoriteBorderOutlined, Remove, ArrowBack } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
@@ -14,28 +14,61 @@ import genreIcons from '../../assets/genres';
 function MovieInfo() {
   const classes = useStyles();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
   const { id } = useParams();
-  const [open,setOpen] = useState(false)
-  const { data, isFetching, error } = useGetMovieQuery(id);
-  const { data: recommendations } = useGetRecommendationsQuery({ movieId: id, list: '/recommendations' });
-  const addToFavorites = () => {};
-  const addToWatchList = () => {};
-  const isMovieFavorited = false;
-  const isMovieWatchlisted = false;
+
+  const { data, error, isFetching } = useGetMovieQuery(id);
+  const { data: favoriteMovies } = useGetListQuery({ listName: 'favorite/movies', accountId: user.id, sessionId: localStorage.getItem('session_id'), page: 1 });
+  const { data: watchlistMovies } = useGetListQuery({ listName: 'watchlist/movies', accountId: user.id, sessionId: localStorage.getItem('session_id'), page: 1 });
+  const { data: recommendations } = useGetRecommendationsQuery({ list: '/recommendations', movie_id: id });
+
+  const [open, setOpen] = useState(false);
+  const [isMovieFavorited, setIsMovieFavorited] = useState(false);
+  const [isMovieWatchlisted, setIsMovieWatchlisted] = useState(false);
+
+  useEffect(() => {
+    setIsMovieFavorited(!!favoriteMovies?.results?.find((movie) => movie?.id === data?.id));
+  }, [favoriteMovies, data]);
+  useEffect(() => {
+    setIsMovieWatchlisted(!!watchlistMovies?.results?.find((movie) => movie?.id === data?.id));
+  }, [watchlistMovies, data]);
+
+  const addToFavorites = async () => {
+    await axios.post(`https://api.themoviedb.org/3/account/${user.id}/favorite?api_key=${process.env.REACT_APP_TMDB_KEY}&session_id=${localStorage.getItem('session_id')}`, {
+      media_type: 'movie',
+      media_id: id,
+      favorite: !isMovieFavorited,
+    });
+
+    setIsMovieFavorited((prev) => !prev);
+  };
+
+  const addToWatchList = async () => {
+    await axios.post(`https://api.themoviedb.org/3/account/${user.id}/watchlist?api_key=${process.env.REACT_APP_TMDB_KEY}&session_id=${localStorage.getItem('session_id')}`, {
+      media_type: 'movie',
+      media_id: id,
+      watchlist: !isMovieWatchlisted,
+    });
+
+    setIsMovieWatchlisted((prev) => !prev);
+  };
+
   if (isFetching) {
     return (
-      <Box display="flex" justifyContent="center">
+      <Box display="flex" alignItems="center" justifyContent="center">
         <CircularProgress size="8rem" />
       </Box>
     );
   }
+
   if (error) {
     return (
-      <Box display="flex" justifyContent="center">
-        <Link to="/">Something has gone wrong</Link>
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <Link to="/">Something went wrong - Go back.</Link>
       </Box>
     );
   }
+
   return (
     <Grid container className={classes.containerSpaceAround}>
       <Grid item sm={12} lg={4} align="center">
@@ -121,7 +154,7 @@ function MovieInfo() {
           You might also like
         </Typography>
         {recommendations
-          ? <MovieList movies={recommendations} noOfMovies={12} />
+          ? <MovieList movies={recommendations} numberOfMovies={12} />
           : <Box>Sorry, nothing was found.</Box>}
       </Box>
       <Modal
